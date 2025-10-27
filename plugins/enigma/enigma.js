@@ -190,19 +190,20 @@ rcube_webmail.prototype.enigma_key_create_save = function () {
     var options, lock, users = [],
         password = $('#key-pass').val(),
         confirm = $('#key-pass-confirm').val(),
-        type = $('#key-type').val();
+        type = $('#key-type').val(),
+        password_required = !rcmail.env.enigma_passwordless;
 
     $('[name="identity[]"]:checked').each(function () {
         users.push({ name: $(this).data('name') || '', email: $(this).data('email') });
     });
 
     // validate the form
-    if (!password || !confirm) {
+    if (password_required && (!password || !confirm)) {
         this.alert_dialog(this.get_label('enigma.formerror'));
         return;
     }
 
-    if (password != confirm) {
+    if ((password || confirm) && password != confirm) {
         this.alert_dialog(this.get_label('enigma.passwordsdiffer'));
         return;
     }
@@ -218,7 +219,7 @@ rcube_webmail.prototype.enigma_key_create_save = function () {
         lock = this.set_busy(true, 'enigma.keygenerating');
         options = {
             userIDs: users,
-            passphrase: password,
+            passphrase: (password_required || password) ? password : undefined,
             type: type.substring(0, 3),
         };
 
@@ -236,8 +237,11 @@ rcube_webmail.prototype.enigma_key_create_save = function () {
                 _a: 'import',
                 _keys: keypair.privateKey,
                 _generated: 1,
-                _passwd: password,
             };
+
+            if (password_required || password) {
+                post._passwd = password;
+            }
 
             // send request to server
             rcmail.http_post('plugin.enigmakeys', post, lock);
