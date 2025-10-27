@@ -133,6 +133,7 @@ class enigma_ui
         $this->enigma->include_script('enigma.js');
 
         $this->rc->output->set_env('keyservers', $this->rc->config->keyservers());
+        $this->rc->output->set_env('enigma_passwordless', (bool) $this->rc->config->get('enigma_passwordless'));
 
         $this->js_loaded = true;
     }
@@ -776,11 +777,13 @@ class enigma_ui
         $table->add(null, $select->show());
 
         // Password and confirm password
+        $passwordless = (bool) $this->rc->config->get('enigma_passwordless');
+
         $table->add('title', html::label('key-pass', rcube::Q($this->enigma->gettext('newkeypass'))));
         $table->add(null, rcube_output::get_edit_field('password', '', [
                 'id' => 'key-pass',
                 'size' => $attrib['size'] ?? null,
-                'required' => true,
+                'required' => !$passwordless,
                 'autocomplete' => 'new-password',
                 'oninput' => "this.type = this.value.length ? 'password' : 'text'",
             ], 'text')
@@ -790,7 +793,7 @@ class enigma_ui
         $table->add(null, rcube_output::get_edit_field('password-confirm', '', [
                 'id' => 'key-pass-confirm',
                 'size' => $attrib['size'] ?? null,
-                'required' => true,
+                'required' => !$passwordless,
                 'autocomplete' => 'new-password',
                 'oninput' => "this.type = this.value.length ? 'password' : 'text'",
             ], 'text')
