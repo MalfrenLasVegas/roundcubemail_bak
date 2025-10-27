@@ -206,7 +206,7 @@ class enigma_ui
         $a_show_cols = ['name'];
 
         // create XHTML table
-        if (class_exists('rcmail_action')) {
+        if (class_exists('rcmail_action', false)) {
             $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
         } elseif (method_exists($this->rc, 'table_output')) {
             $out = $this->rc->table_output($attrib, [], $a_show_cols, 'id');
@@ -775,7 +775,7 @@ class enigma_ui
         $select->add($this->enigma->gettext('rsa2048'), 'rsa2048');
         $select->add($this->enigma->gettext('rsa4096'), 'rsa4096');
 
-        if ($engine->is_supported(enigma_driver::SUPPORT_ECC)) {
+        if (method_exists($engine, 'is_supported') && $engine->is_supported(enigma_driver::SUPPORT_ECC)) {
             $select->add($this->enigma->gettext('ecckeypair'), 'ecc');
         }
 
