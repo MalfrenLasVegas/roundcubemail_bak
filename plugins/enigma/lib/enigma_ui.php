@@ -206,7 +206,13 @@ class enigma_ui
         $a_show_cols = ['name'];
 
         // create XHTML table
-        $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
+        if (class_exists('rcmail_action')) {
+            $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
+        } elseif (method_exists($this->rc, 'table_output')) {
+            $out = $this->rc->table_output($attrib, [], $a_show_cols, 'id');
+        } else {
+            $out = html::tag('table', $attrib);
+        }
 
         // set client env
         $this->rc->output->add_gui_object('keyslist', $attrib['id']);
