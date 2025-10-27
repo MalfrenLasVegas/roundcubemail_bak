@@ -206,6 +206,10 @@ class enigma_ui
         $a_show_cols = ['name'];
 
         // create XHTML table
+        if (!class_exists('rcmail_action')) {
+            require_once RCUBE_INSTALL_PATH . 'program/include/rcmail_action.php';
+        }
+
         $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
 
         // set client env
