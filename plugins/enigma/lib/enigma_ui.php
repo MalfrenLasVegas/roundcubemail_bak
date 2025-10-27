@@ -206,11 +206,13 @@ class enigma_ui
         $a_show_cols = ['name'];
 
         // create XHTML table
-        if (!class_exists('rcmail_action')) {
-            require_once RCUBE_INSTALL_PATH . 'program/include/rcmail_action.php';
+        if (class_exists('rcmail_action')) {
+            $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
+        } elseif (method_exists($this->rc, 'table_output')) {
+            $out = $this->rc->table_output($attrib, [], $a_show_cols, 'id');
+        } else {
+            $out = html::tag('table', $attrib);
         }
-
-        $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
 
         // set client env
         $this->rc->output->add_gui_object('keyslist', $attrib['id']);
