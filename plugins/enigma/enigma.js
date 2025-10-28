@@ -188,21 +188,29 @@ rcube_webmail.prototype.enigma_key_create = function () {
 // Generate key(s) and submit them
 rcube_webmail.prototype.enigma_key_create_save = function () {
     var options, lock, users = [],
-        password = $('#key-pass').val(),
-        confirm = $('#key-pass-confirm').val(),
-        type = $('#key-type').val();
+        form = $('#rcmKeyCreateForm'),
+        form_passwordless = form.length ? form.data('passwordless') : undefined,
+        pass_input = $('#key-pass'),
+        confirm_input = $('#key-pass-confirm'),
+        password = pass_input.length ? pass_input.val() : '',
+        confirm = confirm_input.length ? confirm_input.val() : '',
+        type = $('#key-type').val(),
+        passwordless = form_passwordless !== undefined
+            ? !!form_passwordless
+            : !!rcmail.env.enigma_passwordless,
+        password_required = !passwordless && (pass_input.length ? !!pass_input.prop('required') : true);
 
     $('[name="identity[]"]:checked').each(function () {
         users.push({ name: $(this).data('name') || '', email: $(this).data('email') });
     });
 
     // validate the form
-    if (!password || !confirm) {
+    if (password_required && (!password || !confirm)) {
         this.alert_dialog(this.get_label('enigma.formerror'));
         return;
     }
 
-    if (password != confirm) {
+    if ((password || confirm) && password != confirm) {
         this.alert_dialog(this.get_label('enigma.passwordsdiffer'));
         return;
     }
@@ -218,7 +226,7 @@ rcube_webmail.prototype.enigma_key_create_save = function () {
         lock = this.set_busy(true, 'enigma.keygenerating');
         options = {
             userIDs: users,
-            passphrase: password,
+            passphrase: (password_required || password) ? password : undefined,
             type: type.substring(0, 3),
         };
 
@@ -236,8 +244,11 @@ rcube_webmail.prototype.enigma_key_create_save = function () {
                 _a: 'import',
                 _keys: keypair.privateKey,
                 _generated: 1,
-                _passwd: password,
             };
+
+            if (password_required || password) {
+                post._passwd = password;
+            }
 
             // send request to server
             rcmail.http_post('plugin.enigmakeys', post, lock);

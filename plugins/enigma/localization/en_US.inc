@@ -68,6 +68,7 @@ $labels['keyadd'] = 'Add key';
 
 $labels['newkeyident'] = 'Identity';
 $labels['newkeypass'] = 'Password';
+$labels['newkeypassoptional'] = 'Password (optional)';
 $labels['newkeypassconfirm'] = 'Confirm password';
 $labels['newkeytype'] = 'Key type';
 $labels['rsa2048'] = 'RSA - 2048 bits';
@@ -133,6 +134,8 @@ $messages['keyremoveerror'] = 'Unable to delete selected key(s).';
 $messages['keyimporttext'] = 'You can import private and public key(s) or revocation signatures in ASCII-Armor format.';
 $messages['keyimportsearchtext'] = 'You can search for public keys by key identifier, user name or email address and then import them directly.';
 $messages['keystoragenotice'] = 'All public and private keys are stored on the server.';
+$messages['keypassoptionalnotice'] = 'Passphrases are optional when passwordless storage is enabled; leave the fields blank to create an unprotected key.';
+$messages['keypassoptionalplaceholder'] = 'Leave blank to skip the passphrase';
 
 $messages['formerror'] = 'Please, fill the form. All fields are required!';
 $messages['passwordsdiffer'] = 'Passwords do not match!';

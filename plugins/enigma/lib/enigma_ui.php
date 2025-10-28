@@ -133,6 +133,7 @@ class enigma_ui
         $this->enigma->include_script('enigma.js');
 
         $this->rc->output->set_env('keyservers', $this->rc->config->keyservers());
+        $this->rc->output->set_env('enigma_passwordless', (bool) $this->rc->config->get('enigma_passwordless'));
 
         $this->js_loaded = true;
     }
@@ -205,7 +206,13 @@ class enigma_ui
         $a_show_cols = ['name'];
 
         // create XHTML table
-        $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
+        if (class_exists('rcmail_action', false)) {
+            $out = rcmail_action::table_output($attrib, [], $a_show_cols, 'id');
+        } elseif (method_exists($this->rc, 'table_output')) {
+            $out = $this->rc->table_output($attrib, [], $a_show_cols, 'id');
+        } else {
+            $out = html::tag('table', $attrib);
+        }
 
         // set client env
         $this->rc->output->add_gui_object('keyslist', $attrib['id']);
@@ -768,7 +775,7 @@ class enigma_ui
         $select->add($this->enigma->gettext('rsa2048'), 'rsa2048');
         $select->add($this->enigma->gettext('rsa4096'), 'rsa4096');
 
-        if ($engine->is_supported(enigma_driver::SUPPORT_ECC)) {
+        if (method_exists($engine, 'is_supported') && $engine->is_supported(enigma_driver::SUPPORT_ECC)) {
             $select->add($this->enigma->gettext('ecckeypair'), 'ecc');
         }
 
@@ -776,12 +783,16 @@ class enigma_ui
         $table->add(null, $select->show());
 
         // Password and confirm password
-        $table->add('title', html::label('key-pass', rcube::Q($this->enigma->gettext('newkeypass'))));
+        $passwordless = (bool) $this->rc->config->get('enigma_passwordless');
+
+        $pass_label = $passwordless ? 'newkeypassoptional' : 'newkeypass';
+        $table->add('title', html::label('key-pass', rcube::Q($this->enigma->gettext($pass_label))));
         $table->add(null, rcube_output::get_edit_field('password', '', [
                 'id' => 'key-pass',
                 'size' => $attrib['size'] ?? null,
-                'required' => true,
+                'required' => !$passwordless,
                 'autocomplete' => 'new-password',
+                'placeholder' => $passwordless ? $this->enigma->gettext('keypassoptionalplaceholder') : null,
                 'oninput' => "this.type = this.value.length ? 'password' : 'text'",
             ], 'text')
         );
@@ -790,13 +801,17 @@ class enigma_ui
         $table->add(null, rcube_output::get_edit_field('password-confirm', '', [
                 'id' => 'key-pass-confirm',
                 'size' => $attrib['size'] ?? null,
-                'required' => true,
+                'required' => !$passwordless,
                 'autocomplete' => 'new-password',
+                'placeholder' => $passwordless ? $this->enigma->gettext('keypassoptionalplaceholder') : null,
                 'oninput' => "this.type = this.value.length ? 'password' : 'text'",
             ], 'text')
         );
 
         $warning = $this->enigma->gettext('keystoragenotice');
+        if ($passwordless) {
+            $warning .= ' ' . $this->enigma->gettext('keypassoptionalnotice');
+        }
         $warning = html::div(['class' => 'boxinformation mb-3', 'id' => 'key-notice'], $warning);
 
         $this->rc->output->add_gui_object('keyform', $attrib['id']);
@@ -804,7 +819,16 @@ class enigma_ui
             'enigma.passwordsdiffer', 'enigma.keygenerateerror', 'enigma.noidentselected',
             'enigma.keygennosupport');
 
-        return $this->rc->output->form_tag([], $warning . $table->show($attrib));
+        $form_attrib = [
+            'id' => $attrib['id'],
+            'data-passwordless' => $passwordless ? 1 : 0,
+        ];
+
+        if (!empty($attrib['class'])) {
+            $form_attrib['class'] = $attrib['class'];
+        }
+
+        return $this->rc->output->form_tag($form_attrib, $warning . $table->show($attrib));
     }
 
     /**
